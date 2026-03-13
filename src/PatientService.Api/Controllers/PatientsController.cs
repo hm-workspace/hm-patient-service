@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PatientService.Utils.Common;
 using PatientService.InternalModels.DTOs;
 using PatientService.Services;
 
 namespace PatientService.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/patients")]
 public class PatientsController : ControllerBase
@@ -70,6 +72,7 @@ public class PatientsController : ControllerBase
     }
 }
 
+[Authorize]
 [ApiController]
 [Route("api/patients/{patientId:int}/allergies")]
 public class PatientAllergiesController : ControllerBase
@@ -116,6 +119,7 @@ public class PatientAllergiesController : ControllerBase
     }
 }
 
+[Authorize]
 [ApiController]
 [Route("api/patients/{patientId:int}/medications")]
 public class PatientMedicationsController : ControllerBase

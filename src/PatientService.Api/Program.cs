@@ -59,8 +59,15 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwagger(options =>
+{
+    options.RouteTemplate = "api/patients/swagger/{documentName}/swagger.json";
+});
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/api/patients/swagger/v1/swagger.json", "Patient Service API v1");
+    options.RoutePrefix = "api/patients/swagger";
+});
 
 app.UseHttpsRedirection();
 

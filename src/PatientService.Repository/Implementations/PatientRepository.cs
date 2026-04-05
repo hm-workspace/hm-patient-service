@@ -5,11 +5,11 @@ using PatientService.Utils.Common;
 
 namespace PatientService.Repository;
 
-public class DapperPatientRepository : IPatientRepository
+public class PatientRepository : IPatientRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
 
-    public DapperPatientRepository(IDbConnectionFactory connectionFactory)
+    public PatientRepository(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }

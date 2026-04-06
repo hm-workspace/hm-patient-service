@@ -2,214 +2,240 @@ using Dapper;
 using PatientService.Data;
 using PatientService.InternalModels.Entities;
 using PatientService.Utils.Common;
+using System.Data;
 
 namespace PatientService.Repository;
 
-public class PatientRepository : IPatientRepository
+public class PatientRepository : BaseRepository, IPatientRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
-
     public PatientRepository(IDbConnectionFactory connectionFactory)
+        : base(connectionFactory)
     {
-        _connectionFactory = connectionFactory;
     }
 
-    public Task<PagedResult<PatientEntity>> GetPatientsAsync(SearchQuery searchQuery)
+    public async Task<PagedResult<PatientEntity>> GetPatientsAsync(SearchQuery searchQuery)
     {
-        var query = PatientInMemoryStore.Patients.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(searchQuery.SearchTerm))
+        return await ExecuteWithConnectionAsync(async connection =>
         {
-            query = query.Where(x =>
-                x.PatientId.Contains(searchQuery.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.FirstName.Contains(searchQuery.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.LastName.Contains(searchQuery.SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                x.Email.Contains(searchQuery.SearchTerm, StringComparison.OrdinalIgnoreCase));
+            using var grid = await connection.QueryMultipleAsync(
+                StoredProcedureNames.GetPatientsPaged,
+                new { searchQuery.PageNumber, searchQuery.PageSize, SearchTerm = searchQuery.SearchTerm },
+                commandType: CommandType.StoredProcedure);
+
+            var items = (await grid.ReadAsync<PatientEntity>()).ToList();
+            var total = await grid.ReadFirstAsync<int>();
+            return new PagedResult<PatientEntity>(items, total, searchQuery.PageNumber, searchQuery.PageSize);
+        });
+    }
+
+    public Task<PatientEntity?> GetPatientByIdAsync(int id)
+    {
+        return QuerySingleOrDefaultAsync<PatientEntity>(
+            StoredProcedureNames.GetPatientById,
+            new { Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public Task<PatientEntity?> GetPatientByPatientIdAsync(string patientId)
+    {
+        return QuerySingleOrDefaultAsync<PatientEntity>(
+            StoredProcedureNames.GetPatientByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<PatientEntity> CreatePatientAsync(PatientEntity patient)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.CreatePatient,
+            patient,
+            commandType: CommandType.StoredProcedure);
+
+        patient.Id = id;
+        if (string.IsNullOrWhiteSpace(patient.PatientId))
+        {
+            patient.PatientId = $"PAT{id:000}";
+        }
+        return patient;
+    }
+
+    public async Task<PatientEntity?> UpdatePatientAsync(int id, PatientEntity patient)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdatePatient,
+            new
+            {
+                Id = id,
+                patient.PatientId,
+                patient.FirstName,
+                patient.LastName,
+                patient.DateOfBirth,
+                patient.Gender,
+                patient.Email,
+                patient.Phone,
+                patient.Address,
+                patient.IsActive,
+                UpdatedAt = DateTime.UtcNow
+            },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
+        {
+            return null;
         }
 
-        var total = query.Count();
-        var items = query.OrderBy(x => x.Id)
-            .Skip((searchQuery.PageNumber - 1) * searchQuery.PageSize)
-            .Take(searchQuery.PageSize)
-            .ToList();
-        return Task.FromResult(new PagedResult<PatientEntity>(items, total, searchQuery.PageNumber, searchQuery.PageSize));
+        return await GetPatientByIdAsync(id);
     }
 
-    public Task<PatientEntity?> GetPatientByIdAsync(int id) =>
-        Task.FromResult(PatientInMemoryStore.Patients.FirstOrDefault(x => x.Id == id));
-
-    public Task<PatientEntity?> GetPatientByPatientIdAsync(string patientId) =>
-        Task.FromResult(PatientInMemoryStore.Patients.FirstOrDefault(x => x.PatientId.Equals(patientId, StringComparison.OrdinalIgnoreCase)));
-
-    public Task<PatientEntity> CreatePatientAsync(PatientEntity patient)
+    public async Task<bool> DeletePatientAsync(int id)
     {
-        patient.Id = Interlocked.Increment(ref PatientInMemoryStore.PatientSeed);
-        PatientInMemoryStore.Patients.Add(patient);
-        return Task.FromResult(patient);
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeletePatient,
+            new { Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
     }
 
-    public Task<PatientEntity?> UpdatePatientAsync(int id, PatientEntity patient)
+    public async Task<string> GeneratePatientIdAsync()
     {
-        var existing = PatientInMemoryStore.Patients.FirstOrDefault(x => x.Id == id);
-        if (existing is null)
+        return await ExecuteScalarAsync<string>(
+            StoredProcedureNames.GeneratePatientId,
+            commandType: CommandType.StoredProcedure) ?? string.Empty;
+    }
+
+    public async Task<IReadOnlyCollection<AllergyEntity>> GetAllergiesAsync(int patientId)
+    {
+        var items = await QueryAsync<AllergyEntity>(
+            StoredProcedureNames.GetAllergiesByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<AllergyEntity?> GetAllergyAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<AllergyEntity>(
+            StoredProcedureNames.GetAllergyById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<AllergyEntity> AddAllergyAsync(AllergyEntity allergy)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddAllergy,
+            allergy,
+            commandType: CommandType.StoredProcedure);
+        allergy.Id = id;
+        return allergy;
+    }
+
+    public async Task<AllergyEntity?> UpdateAllergyAsync(int patientId, int id, AllergyEntity allergy)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateAllergy,
+            new { PatientId = patientId, Id = id, allergy.Allergy, allergy.Severity, allergy.Notes },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
         {
-            return Task.FromResult<PatientEntity?>(null);
+            return null;
         }
 
-        existing.FirstName = patient.FirstName;
-        existing.LastName = patient.LastName;
-        existing.DateOfBirth = patient.DateOfBirth;
-        existing.Gender = patient.Gender;
-        existing.Email = patient.Email;
-        existing.Phone = patient.Phone;
-        existing.Address = patient.Address;
-        existing.UpdatedAt = DateTime.UtcNow;
-        return Task.FromResult<PatientEntity?>(existing);
+        return await GetAllergyAsync(patientId, id);
     }
 
-    public Task<bool> DeletePatientAsync(int id)
+    public async Task<bool> DeleteAllergyAsync(int patientId, int id)
     {
-        var existing = PatientInMemoryStore.Patients.FirstOrDefault(x => x.Id == id);
-        if (existing is null)
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteAllergy,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
+    }
+
+    public async Task<IReadOnlyCollection<MedicationEntity>> GetMedicationsAsync(int patientId)
+    {
+        var items = await QueryAsync<MedicationEntity>(
+            StoredProcedureNames.GetMedicationsByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public async Task<IReadOnlyCollection<MedicationEntity>> GetActiveMedicationsAsync(int patientId)
+    {
+        var items = await QueryAsync<MedicationEntity>(
+            StoredProcedureNames.GetActiveMedicationsByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<MedicationEntity?> GetMedicationAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<MedicationEntity>(
+            StoredProcedureNames.GetMedicationById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<MedicationEntity> AddMedicationAsync(MedicationEntity medication)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddMedication,
+            medication,
+            commandType: CommandType.StoredProcedure);
+        medication.Id = id;
+        return medication;
+    }
+
+    public async Task<MedicationEntity?> UpdateMedicationAsync(int patientId, int id, MedicationEntity medication)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateMedication,
+            new
+            {
+                PatientId = patientId,
+                Id = id,
+                medication.MedicationName,
+                medication.Dosage,
+                medication.Frequency,
+                medication.StartDate,
+                medication.EndDate,
+                medication.Notes
+            },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
         {
-            return Task.FromResult(false);
+            return null;
         }
 
-        PatientInMemoryStore.Patients.Remove(existing);
-        PatientInMemoryStore.Allergies.RemoveAll(x => x.PatientId == id);
-        PatientInMemoryStore.Medications.RemoveAll(x => x.PatientId == id);
-        return Task.FromResult(true);
+        return await GetMedicationAsync(patientId, id);
     }
 
-    public Task<string> GeneratePatientIdAsync()
+    public async Task<MedicationEntity?> DiscontinueMedicationAsync(int patientId, int id, DateTime endDate)
     {
-        var next = PatientInMemoryStore.Patients.Count + 1;
-        return Task.FromResult($"PAT{next:000}");
-    }
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DiscontinueMedication,
+            new { PatientId = patientId, Id = id, EndDate = endDate },
+            commandType: CommandType.StoredProcedure);
 
-    public Task<IReadOnlyCollection<AllergyEntity>> GetAllergiesAsync(int patientId) =>
-        Task.FromResult<IReadOnlyCollection<AllergyEntity>>(PatientInMemoryStore.Allergies.Where(x => x.PatientId == patientId).ToList());
-
-    public Task<AllergyEntity?> GetAllergyAsync(int patientId, int id) =>
-        Task.FromResult(PatientInMemoryStore.Allergies.FirstOrDefault(x => x.PatientId == patientId && x.Id == id));
-
-    public Task<AllergyEntity> AddAllergyAsync(AllergyEntity allergy)
-    {
-        allergy.Id = Interlocked.Increment(ref PatientInMemoryStore.AllergySeed);
-        PatientInMemoryStore.Allergies.Add(allergy);
-        return Task.FromResult(allergy);
-    }
-
-    public Task<AllergyEntity?> UpdateAllergyAsync(int patientId, int id, AllergyEntity allergy)
-    {
-        var existing = PatientInMemoryStore.Allergies.FirstOrDefault(x => x.PatientId == patientId && x.Id == id);
-        if (existing is null)
+        if (rowsAffected <= 0)
         {
-            return Task.FromResult<AllergyEntity?>(null);
+            return null;
         }
 
-        existing.Allergy = allergy.Allergy;
-        existing.Severity = allergy.Severity;
-        existing.Notes = allergy.Notes;
-        return Task.FromResult<AllergyEntity?>(existing);
+        return await GetMedicationAsync(patientId, id);
     }
 
-    public Task<bool> DeleteAllergyAsync(int patientId, int id)
+    public async Task<bool> DeleteMedicationAsync(int patientId, int id)
     {
-        var existing = PatientInMemoryStore.Allergies.FirstOrDefault(x => x.PatientId == patientId && x.Id == id);
-        if (existing is null)
-        {
-            return Task.FromResult(false);
-        }
-
-        PatientInMemoryStore.Allergies.Remove(existing);
-        return Task.FromResult(true);
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteMedication,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
     }
-
-    public Task<IReadOnlyCollection<MedicationEntity>> GetMedicationsAsync(int patientId) =>
-        Task.FromResult<IReadOnlyCollection<MedicationEntity>>(PatientInMemoryStore.Medications.Where(x => x.PatientId == patientId).ToList());
-
-    public Task<IReadOnlyCollection<MedicationEntity>> GetActiveMedicationsAsync(int patientId) =>
-        Task.FromResult<IReadOnlyCollection<MedicationEntity>>(PatientInMemoryStore.Medications
-            .Where(x => x.PatientId == patientId && (!x.EndDate.HasValue || x.EndDate > DateTime.UtcNow))
-            .ToList());
-
-    public Task<MedicationEntity?> GetMedicationAsync(int patientId, int id) =>
-        Task.FromResult(PatientInMemoryStore.Medications.FirstOrDefault(x => x.PatientId == patientId && x.Id == id));
-
-    public Task<MedicationEntity> AddMedicationAsync(MedicationEntity medication)
-    {
-        medication.Id = Interlocked.Increment(ref PatientInMemoryStore.MedicationSeed);
-        PatientInMemoryStore.Medications.Add(medication);
-        return Task.FromResult(medication);
-    }
-
-    public Task<MedicationEntity?> UpdateMedicationAsync(int patientId, int id, MedicationEntity medication)
-    {
-        var existing = PatientInMemoryStore.Medications.FirstOrDefault(x => x.PatientId == patientId && x.Id == id);
-        if (existing is null)
-        {
-            return Task.FromResult<MedicationEntity?>(null);
-        }
-
-        existing.MedicationName = medication.MedicationName;
-        existing.Dosage = medication.Dosage;
-        existing.Frequency = medication.Frequency;
-        existing.StartDate = medication.StartDate;
-        existing.EndDate = medication.EndDate;
-        existing.Notes = medication.Notes;
-        return Task.FromResult<MedicationEntity?>(existing);
-    }
-
-    public Task<MedicationEntity?> DiscontinueMedicationAsync(int patientId, int id, DateTime endDate)
-    {
-        var existing = PatientInMemoryStore.Medications.FirstOrDefault(x => x.PatientId == patientId && x.Id == id);
-        if (existing is null)
-        {
-            return Task.FromResult<MedicationEntity?>(null);
-        }
-
-        existing.EndDate = endDate;
-        return Task.FromResult<MedicationEntity?>(existing);
-    }
-
-    public Task<bool> DeleteMedicationAsync(int patientId, int id)
-    {
-        var existing = PatientInMemoryStore.Medications.FirstOrDefault(x => x.PatientId == patientId && x.Id == id);
-        if (existing is null)
-        {
-            return Task.FromResult(false);
-        }
-
-        PatientInMemoryStore.Medications.Remove(existing);
-        return Task.FromResult(true);
-    }
-}
-
-internal static class PatientInMemoryStore
-{
-    public static int PatientSeed = 1;
-    public static int AllergySeed = 0;
-    public static int MedicationSeed = 0;
-
-    public static readonly List<PatientEntity> Patients =
-    [
-        new PatientEntity
-        {
-            Id = 1,
-            PatientId = "PAT001",
-            FirstName = "John",
-            LastName = "Doe",
-            DateOfBirth = new DateTime(1990, 1, 1),
-            Gender = "Male",
-            Email = "john.doe@hm.local",
-            Phone = "9000000001",
-            Address = "Hyderabad",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        }
-    ];
-
-    public static readonly List<AllergyEntity> Allergies = [];
-    public static readonly List<MedicationEntity> Medications = [];
 }

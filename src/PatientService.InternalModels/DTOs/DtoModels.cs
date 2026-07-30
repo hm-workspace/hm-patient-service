@@ -5,8 +5,7 @@ namespace PatientService.InternalModels.DTOs;
 public class CreatePatientDto
 {
     public string PatientId { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string PatientName { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string Gender { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -185,8 +184,7 @@ public class PatientDto
 {
     public int Id { get; set; }
     public string PatientId { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string PatientName { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string Gender { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -197,8 +195,7 @@ public class PatientDto
     {
         Id = entity.Id,
         PatientId = entity.PatientId,
-        FirstName = entity.FirstName,
-        LastName = entity.LastName,
+        PatientName = entity.PatientName,
         DateOfBirth = entity.DateOfBirth,
         Gender = entity.Gender,
         Email = entity.Email,

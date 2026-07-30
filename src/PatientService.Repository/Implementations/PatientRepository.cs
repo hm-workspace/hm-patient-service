@@ -51,8 +51,7 @@ public class PatientRepository : BaseRepository, IPatientRepository
             new
             {
                 patient.PatientId,
-                patient.FirstName,
-                patient.LastName,
+                patient.PatientName,
                 patient.DateOfBirth,
                 patient.Gender,
                 patient.Email,
@@ -80,8 +79,7 @@ public class PatientRepository : BaseRepository, IPatientRepository
             {
                 Id = id,
                 patient.PatientId,
-                patient.FirstName,
-                patient.LastName,
+                patient.PatientName,
                 patient.DateOfBirth,
                 patient.Gender,
                 patient.Email,

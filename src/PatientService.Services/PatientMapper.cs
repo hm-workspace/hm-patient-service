@@ -10,8 +10,7 @@ internal static class PatientMapper
     public static PatientEntity ToEntity(CreatePatientDto dto, bool isActive = true) => new()
     {
         PatientId = dto.PatientId,
-        FirstName = dto.FirstName,
-        LastName = dto.LastName,
+        PatientName = dto.PatientName,
         DateOfBirth = dto.DateOfBirth,
         Gender = dto.Gender,
         Email = dto.Email,
@@ -25,8 +24,7 @@ internal static class PatientMapper
     public static PatientEntity ToEntity(UpdatePatientDto dto) => new()
     {
         PatientId = dto.PatientId,
-        FirstName = dto.FirstName,
-        LastName = dto.LastName,
+        PatientName = dto.PatientName,
         DateOfBirth = dto.DateOfBirth,
         Gender = dto.Gender,
         Email = dto.Email,

@@ -29,4 +29,22 @@ public static class StoredProcedureNames
     public const string AddMedicalHistory = "dbo.AddMedicalHistory";
     public const string UpdateMedicalHistory = "dbo.UpdateMedicalHistory";
     public const string DeleteMedicalHistory = "dbo.DeleteMedicalHistory";
+
+    public const string GetEmergencyContactsByPatientId = "dbo.GetEmergencyContactsByPatientId";
+    public const string GetEmergencyContactById = "dbo.GetEmergencyContactById";
+    public const string AddEmergencyContact = "dbo.AddEmergencyContact";
+    public const string UpdateEmergencyContact = "dbo.UpdateEmergencyContact";
+    public const string DeleteEmergencyContact = "dbo.DeleteEmergencyContact";
+
+    public const string GetInsuranceByPatientId = "dbo.GetInsuranceByPatientId";
+    public const string GetInsuranceById = "dbo.GetInsuranceById";
+    public const string AddInsurance = "dbo.AddInsurance";
+    public const string UpdateInsurance = "dbo.UpdateInsurance";
+    public const string DeleteInsurance = "dbo.DeleteInsurance";
+
+    public const string GetVitalsByPatientId = "dbo.GetVitalsByPatientId";
+    public const string GetVitalById = "dbo.GetVitalById";
+    public const string AddVital = "dbo.AddVital";
+    public const string UpdateVital = "dbo.UpdateVital";
+    public const string DeleteVital = "dbo.DeleteVital";
 }

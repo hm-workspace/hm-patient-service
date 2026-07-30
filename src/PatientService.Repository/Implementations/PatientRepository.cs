@@ -197,7 +197,16 @@ public class PatientRepository : BaseRepository, IPatientRepository
     {
         var id = await ExecuteScalarAsync<int>(
             StoredProcedureNames.AddMedication,
-            medication,
+            new
+            {
+                medication.PatientId,
+                medication.MedicationName,
+                medication.Dosage,
+                medication.Frequency,
+                medication.StartDate,
+                medication.EndDate,
+                medication.Notes
+            },
             commandType: CommandType.StoredProcedure);
         medication.Id = id;
         return medication;
@@ -209,8 +218,8 @@ public class PatientRepository : BaseRepository, IPatientRepository
             StoredProcedureNames.UpdateMedication,
             new
             {
-                PatientId = patientId,
-                Id = id,
+                medication.PatientId,
+                medication.Id,
                 medication.MedicationName,
                 medication.Dosage,
                 medication.Frequency,
@@ -273,7 +282,13 @@ public class PatientRepository : BaseRepository, IPatientRepository
     {
         var id = await ExecuteScalarAsync<int>(
             StoredProcedureNames.AddMedicalHistory,
-            medicalHistory,
+            new
+            {
+                medicalHistory.PatientId,
+                medicalHistory.ConditionName,
+                medicalHistory.DiagnosedDate,
+                medicalHistory.Notes
+            },
             commandType: CommandType.StoredProcedure);
         medicalHistory.Id = id;
         return medicalHistory;
@@ -305,6 +320,182 @@ public class PatientRepository : BaseRepository, IPatientRepository
     {
         var rowsAffected = await ExecuteAsync(
             StoredProcedureNames.DeleteMedicalHistory,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
+    }
+
+    public async Task<IReadOnlyCollection<EmergencyContactEntity>> GetEmergencyContactsAsync(int patientId)
+    {
+        var items = await QueryAsync<EmergencyContactEntity>(
+            StoredProcedureNames.GetEmergencyContactsByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<EmergencyContactEntity?> GetEmergencyContactAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<EmergencyContactEntity>(
+            StoredProcedureNames.GetEmergencyContactById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<EmergencyContactEntity> AddEmergencyContactAsync(EmergencyContactEntity emergencyContact)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddEmergencyContact,
+            new { emergencyContact.PatientId, emergencyContact.Name, emergencyContact.Phone },
+            commandType: CommandType.StoredProcedure);
+        emergencyContact.Id = id;
+        return emergencyContact;
+    }
+
+    public async Task<EmergencyContactEntity?> UpdateEmergencyContactAsync(int patientId, int id, EmergencyContactEntity emergencyContact)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateEmergencyContact,
+            new { PatientId = patientId, Id = id, emergencyContact.Name, emergencyContact.Phone },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
+        {
+            return null;
+        }
+
+        return await GetEmergencyContactAsync(patientId, id);
+    }
+
+    public async Task<bool> DeleteEmergencyContactAsync(int patientId, int id)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteEmergencyContact,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
+    }
+
+    public async Task<IReadOnlyCollection<InsuranceEntity>> GetInsuranceAsync(int patientId)
+    {
+        var items = await QueryAsync<InsuranceEntity>(
+            StoredProcedureNames.GetInsuranceByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<InsuranceEntity?> GetInsuranceAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<InsuranceEntity>(
+            StoredProcedureNames.GetInsuranceById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<InsuranceEntity> AddInsuranceAsync(InsuranceEntity insurance)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddInsurance,
+            new { insurance.PatientId, insurance.Provider, insurance.PolicyNumber },
+            commandType: CommandType.StoredProcedure);
+        insurance.Id = id;
+        return insurance;
+    }
+
+    public async Task<InsuranceEntity?> UpdateInsuranceAsync(int patientId, int id, InsuranceEntity insurance)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateInsurance,
+            new { PatientId = patientId, Id = id, insurance.Provider, insurance.PolicyNumber },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
+        {
+            return null;
+        }
+
+        return await GetInsuranceAsync(patientId, id);
+    }
+
+    public async Task<bool> DeleteInsuranceAsync(int patientId, int id)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteInsurance,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
+    }
+
+    public async Task<IReadOnlyCollection<VitalEntity>> GetVitalsAsync(int patientId)
+    {
+        var items = await QueryAsync<VitalEntity>(
+            StoredProcedureNames.GetVitalsByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<VitalEntity?> GetVitalAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<VitalEntity>(
+            StoredProcedureNames.GetVitalById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<VitalEntity> AddVitalAsync(VitalEntity vital)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddVital,
+            new
+            {
+                vital.PatientId,
+                vital.MeasurementDate,
+                vital.BloodPressureSystolic,
+                vital.BloodPressureDiastolic,
+                vital.HeartRate,
+                vital.Temperature,
+                vital.Weight,
+                vital.Height,
+                vital.Notes
+            },
+            commandType: CommandType.StoredProcedure);
+        vital.Id = id;
+        return vital;
+    }
+
+    public async Task<VitalEntity?> UpdateVitalAsync(int patientId, int id, VitalEntity vital)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateVital,
+            new
+            {
+                PatientId = patientId,
+                Id = id,
+                vital.MeasurementDate,
+                vital.BloodPressureSystolic,
+                vital.BloodPressureDiastolic,
+                vital.HeartRate,
+                vital.Temperature,
+                vital.Weight,
+                vital.Height,
+                vital.Notes
+            },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
+        {
+            return null;
+        }
+
+        return await GetVitalAsync(patientId, id);
+    }
+
+    public async Task<bool> DeleteVitalAsync(int patientId, int id)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteVital,
             new { PatientId = patientId, Id = id },
             commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;

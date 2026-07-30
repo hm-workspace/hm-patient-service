@@ -52,6 +52,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+builder.Services.AddScoped<IPatientProfileService, PatientProfileService>();
+builder.Services.AddScoped<IClinicalDetailsService, ClinicalDetailsService>();
 builder.Services.AddScoped<IPatientService, PatientService.Services.PatientService>();
 
 builder.Services.AddEndpointsApiExplorer();

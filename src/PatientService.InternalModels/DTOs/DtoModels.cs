@@ -74,6 +74,66 @@ public class MedicalHistoryDto
     };
 }
 
+public class EmergencyContactDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+
+    public static EmergencyContactDto FromEntity(EmergencyContactEntity entity) => new()
+    {
+        Id = entity.Id,
+        PatientId = entity.PatientId,
+        Name = entity.Name,
+        Phone = entity.Phone
+    };
+}
+
+public class InsuranceDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public string PolicyNumber { get; set; } = string.Empty;
+
+    public static InsuranceDto FromEntity(InsuranceEntity entity) => new()
+    {
+        Id = entity.Id,
+        PatientId = entity.PatientId,
+        Provider = entity.Provider,
+        PolicyNumber = entity.PolicyNumber
+    };
+}
+
+public class VitalDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public DateTime MeasurementDate { get; set; }
+    public int? BloodPressureSystolic { get; set; }
+    public int? BloodPressureDiastolic { get; set; }
+    public int? HeartRate { get; set; }
+    public decimal? Temperature { get; set; }
+    public decimal? Weight { get; set; }
+    public decimal? Height { get; set; }
+    public string? Notes { get; set; }
+
+    public static VitalDto FromEntity(VitalEntity entity) => new()
+    {
+        Id = entity.Id,
+        PatientId = entity.PatientId,
+        MeasurementDate = entity.MeasurementDate,
+        BloodPressureSystolic = entity.BloodPressureSystolic,
+        BloodPressureDiastolic = entity.BloodPressureDiastolic,
+        HeartRate = entity.HeartRate,
+        Temperature = entity.Temperature,
+        Weight = entity.Weight,
+        Height = entity.Height,
+        Notes = entity.Notes
+    };
+}
+
 public class DiscontinueMedicationRequest
 {
     public DateTime? EndDate { get; set; }
@@ -84,6 +144,19 @@ public class CreatePatientWithClinicalDetailsDto : CreatePatientDto
     public List<AllergyDto> Allergies { get; set; } = new();
     public List<MedicationDto> Medications { get; set; } = new();
     public List<MedicalHistoryDto> MedicalHistory { get; set; } = new();
+    public List<EmergencyContactDto> EmergencyContacts { get; set; } = new();
+    public List<InsuranceDto> Insurance { get; set; } = new();
+    public List<VitalDto> Vitals { get; set; } = new();
+}
+
+public class UpdatePatientWithClinicalDetailsDto : UpdatePatientDto
+{
+    public List<AllergyDto> Allergies { get; set; } = new();
+    public List<MedicationDto> Medications { get; set; } = new();
+    public List<MedicalHistoryDto> MedicalHistory { get; set; } = new();
+    public List<EmergencyContactDto> EmergencyContacts { get; set; } = new();
+    public List<InsuranceDto> Insurance { get; set; } = new();
+    public List<VitalDto> Vitals { get; set; } = new();
 }
 
 public class PatientWithClinicalDetailsDto
@@ -92,6 +165,9 @@ public class PatientWithClinicalDetailsDto
     public IReadOnlyCollection<AllergyDto> Allergies { get; set; } = Array.Empty<AllergyDto>();
     public IReadOnlyCollection<MedicationDto> Medications { get; set; } = Array.Empty<MedicationDto>();
     public IReadOnlyCollection<MedicalHistoryDto> MedicalHistory { get; set; } = Array.Empty<MedicalHistoryDto>();
+    public IReadOnlyCollection<EmergencyContactDto> EmergencyContacts { get; set; } = Array.Empty<EmergencyContactDto>();
+    public IReadOnlyCollection<InsuranceDto> Insurance { get; set; } = Array.Empty<InsuranceDto>();
+    public IReadOnlyCollection<VitalDto> Vitals { get; set; } = Array.Empty<VitalDto>();
 }
 
 public class PatientDetailsDto
@@ -100,6 +176,9 @@ public class PatientDetailsDto
     public IReadOnlyCollection<AllergyDto> Allergies { get; set; } = Array.Empty<AllergyDto>();
     public IReadOnlyCollection<MedicationDto> Medications { get; set; } = Array.Empty<MedicationDto>();
     public IReadOnlyCollection<MedicalHistoryDto> MedicalHistory { get; set; } = Array.Empty<MedicalHistoryDto>();
+    public IReadOnlyCollection<EmergencyContactDto> EmergencyContacts { get; set; } = Array.Empty<EmergencyContactDto>();
+    public IReadOnlyCollection<InsuranceDto> Insurance { get; set; } = Array.Empty<InsuranceDto>();
+    public IReadOnlyCollection<VitalDto> Vitals { get; set; } = Array.Empty<VitalDto>();
 }
 
 public class PatientDto

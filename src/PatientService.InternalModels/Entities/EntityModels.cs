@@ -46,4 +46,34 @@ public class MedicalHistoryEntity
     public string Notes { get; set; } = string.Empty;
 }
 
+public class EmergencyContactEntity
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+}
+
+public class InsuranceEntity
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public string PolicyNumber { get; set; } = string.Empty;
+}
+
+public class VitalEntity
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public DateTime MeasurementDate { get; set; }
+    public int? BloodPressureSystolic { get; set; }
+    public int? BloodPressureDiastolic { get; set; }
+    public int? HeartRate { get; set; }
+    public decimal? Temperature { get; set; }
+    public decimal? Weight { get; set; }
+    public decimal? Height { get; set; }
+    public string? Notes { get; set; }
+}
+
 

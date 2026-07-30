@@ -3,18 +3,10 @@ using PatientService.Utils.Common;
 
 namespace PatientService.Services;
 
-public interface IPatientService
+public interface IClinicalDetailsService
 {
-    Task<ApiResponse<PagedResult<PatientDto>>> GetPatientsAsync(SearchQuery searchQuery);
-    Task<ApiResponse<PatientDto>> GetPatientByIdAsync(int id);
-    Task<ApiResponse<PatientDetailsDto>> GetPatientByPatientIdAsync(string patientId);
-    Task<ApiResponse<PagedResult<PatientDto>>> SearchPatientsAsync(string searchTerm, int pageNumber, int pageSize);
-    Task<ApiResponse<string>> GeneratePatientIdAsync();
-    Task<ApiResponse<PatientDto>> CreatePatientAsync(CreatePatientDto createPatientDto);
     Task<ApiResponse<PatientWithClinicalDetailsDto>> CreatePatientWithClinicalDetailsAsync(CreatePatientWithClinicalDetailsDto createPatientDto);
-    Task<ApiResponse<PatientDto>> UpdatePatientAsync(int id, UpdatePatientDto updatePatientDto);
     Task<ApiResponse<PatientWithClinicalDetailsDto>> UpdatePatientWithClinicalDetailsAsync(int id, UpdatePatientWithClinicalDetailsDto updatePatientDto);
-    Task<ApiResponse<string>> DeletePatientAsync(int id);
 
     Task<ApiResponse<IEnumerable<AllergyDto>>> GetAllergiesAsync(int patientId);
     Task<ApiResponse<AllergyDto>> GetAllergyAsync(int patientId, int id);

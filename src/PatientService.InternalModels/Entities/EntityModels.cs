@@ -37,4 +37,13 @@ public class MedicationEntity
     public string Notes { get; set; } = string.Empty;
 }
 
+public class MedicalHistoryEntity
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string ConditionName { get; set; } = string.Empty;
+    public DateTime? DiagnosedDate { get; set; }
+    public string Notes { get; set; } = string.Empty;
+}
+
 

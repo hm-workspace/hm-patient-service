@@ -34,6 +34,8 @@ public class AllergyDto
 
 public class MedicationDto
 {
+    public int Id { get; set; }
+    public int PatientId { get; set; }
     public string MedicationName { get; set; } = string.Empty;
     public string Dosage { get; set; } = string.Empty;
     public string Frequency { get; set; } = string.Empty;
@@ -43,11 +45,31 @@ public class MedicationDto
 
     public static MedicationDto FromEntity(MedicationEntity entity) => new()
     {
+        Id = entity.Id,
+        PatientId = entity.PatientId,
         MedicationName = entity.MedicationName,
         Dosage = entity.Dosage,
         Frequency = entity.Frequency,
         StartDate = entity.StartDate,
         EndDate = entity.EndDate,
+        Notes = entity.Notes
+    };
+}
+
+public class MedicalHistoryDto
+{
+    public int Id { get; set; }
+    public int PatientId { get; set; }
+    public string ConditionName { get; set; } = string.Empty;
+    public DateTime? DiagnosedDate { get; set; }
+    public string Notes { get; set; } = string.Empty;
+
+    public static MedicalHistoryDto FromEntity(MedicalHistoryEntity entity) => new()
+    {
+        Id = entity.Id,
+        PatientId = entity.PatientId,
+        ConditionName = entity.ConditionName,
+        DiagnosedDate = entity.DiagnosedDate,
         Notes = entity.Notes
     };
 }
@@ -61,6 +83,7 @@ public class CreatePatientWithClinicalDetailsDto : CreatePatientDto
 {
     public List<AllergyDto> Allergies { get; set; } = new();
     public List<MedicationDto> Medications { get; set; } = new();
+    public List<MedicalHistoryDto> MedicalHistory { get; set; } = new();
 }
 
 public class PatientWithClinicalDetailsDto
@@ -68,6 +91,15 @@ public class PatientWithClinicalDetailsDto
     public PatientDto Patient { get; set; } = new();
     public IReadOnlyCollection<AllergyDto> Allergies { get; set; } = Array.Empty<AllergyDto>();
     public IReadOnlyCollection<MedicationDto> Medications { get; set; } = Array.Empty<MedicationDto>();
+    public IReadOnlyCollection<MedicalHistoryDto> MedicalHistory { get; set; } = Array.Empty<MedicalHistoryDto>();
+}
+
+public class PatientDetailsDto
+{
+    public PatientDto Patient { get; set; } = new();
+    public IReadOnlyCollection<AllergyDto> Allergies { get; set; } = Array.Empty<AllergyDto>();
+    public IReadOnlyCollection<MedicationDto> Medications { get; set; } = Array.Empty<MedicationDto>();
+    public IReadOnlyCollection<MedicalHistoryDto> MedicalHistory { get; set; } = Array.Empty<MedicalHistoryDto>();
 }
 
 public class PatientDto

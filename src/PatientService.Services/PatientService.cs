@@ -27,10 +27,27 @@ public class PatientService : IPatientService
         return patient is null ? ApiResponse<PatientDto>.Fail("Patient not found") : ApiResponse<PatientDto>.Ok(PatientDto.FromEntity(patient));
     }
 
-    public async Task<ApiResponse<PatientDto>> GetPatientByPatientIdAsync(string patientId)
+    public async Task<ApiResponse<PatientDetailsDto>> GetPatientByPatientIdAsync(string patientId)
     {
         var patient = await _patientRepository.GetPatientByPatientIdAsync(patientId);
-        return patient is null ? ApiResponse<PatientDto>.Fail("Patient not found") : ApiResponse<PatientDto>.Ok(PatientDto.FromEntity(patient));
+        if (patient is null)
+        {
+            return ApiResponse<PatientDetailsDto>.Fail("Patient not found");
+        }
+
+        var allergies = await _patientRepository.GetAllergiesAsync(patient.Id);
+        var medications = await _patientRepository.GetMedicationsAsync(patient.Id);
+        var medicalHistory = await _patientRepository.GetMedicalHistoryAsync(patient.Id);
+
+        var response = new PatientDetailsDto
+        {
+            Patient = PatientDto.FromEntity(patient),
+            Allergies = allergies.Select(AllergyDto.FromEntity).ToList(),
+            Medications = medications.Select(MedicationDto.FromEntity).ToList(),
+            MedicalHistory = medicalHistory.Select(MedicalHistoryDto.FromEntity).ToList()
+        };
+
+        return ApiResponse<PatientDetailsDto>.Ok(response);
     }
 
     public Task<ApiResponse<PagedResult<PatientDto>>> SearchPatientsAsync(string searchTerm, int pageNumber, int pageSize)
@@ -98,11 +115,30 @@ public class PatientService : IPatientService
             }
         }
 
+        var medicalHistory = new List<MedicalHistoryDto>();
+        foreach (var history in createPatientDto.MedicalHistory ?? [])
+        {
+            var entity = new MedicalHistoryEntity
+            {
+                PatientId = patientId,
+                ConditionName = history.ConditionName,
+                DiagnosedDate = history.DiagnosedDate,
+                Notes = history.Notes
+            };
+
+            var result = await _patientRepository.AddMedicalHistoryAsync(entity);
+            if (result is not null)
+            {
+                medicalHistory.Add(MedicalHistoryDto.FromEntity(result));
+            }
+        }
+
         var data = new PatientWithClinicalDetailsDto
         {
             Patient = patientResult.Data,
             Allergies = allergies,
-            Medications = medications
+            Medications = medications,
+            MedicalHistory = medicalHistory
         };
 
         return ApiResponse<PatientWithClinicalDetailsDto>.Ok(data, "Patient created successfully");
@@ -227,5 +263,51 @@ public class PatientService : IPatientService
     {
         var deleted = await _patientRepository.DeleteMedicationAsync(patientId, id);
         return deleted ? ApiResponse<string>.Ok("Medication deleted") : ApiResponse<string>.Fail("Medication not found");
+    }
+
+    public async Task<ApiResponse<IEnumerable<MedicalHistoryDto>>> GetMedicalHistoryAsync(int patientId)
+    {
+        var data = await _patientRepository.GetMedicalHistoryAsync(patientId);
+        return ApiResponse<IEnumerable<MedicalHistoryDto>>.Ok(data.Select(MedicalHistoryDto.FromEntity).ToList());
+    }
+
+    public async Task<ApiResponse<MedicalHistoryDto>> GetMedicalHistoryAsync(int patientId, int id)
+    {
+        var data = await _patientRepository.GetMedicalHistoryAsync(patientId, id);
+        return data is null ? ApiResponse<MedicalHistoryDto>.Fail("Medical history not found") : ApiResponse<MedicalHistoryDto>.Ok(MedicalHistoryDto.FromEntity(data));
+    }
+
+    public async Task<ApiResponse<MedicalHistoryDto>> AddMedicalHistoryAsync(int patientId, MedicalHistoryDto dto)
+    {
+        var entity = new MedicalHistoryEntity
+        {
+            PatientId = patientId,
+            ConditionName = dto.ConditionName,
+            DiagnosedDate = dto.DiagnosedDate,
+            Notes = dto.Notes
+        };
+
+        var data = await _patientRepository.AddMedicalHistoryAsync(entity);
+        return ApiResponse<MedicalHistoryDto>.Ok(MedicalHistoryDto.FromEntity(data), "Medical history added");
+    }
+
+    public async Task<ApiResponse<MedicalHistoryDto>> UpdateMedicalHistoryAsync(int patientId, int id, MedicalHistoryDto dto)
+    {
+        var entity = new MedicalHistoryEntity
+        {
+            PatientId = patientId,
+            ConditionName = dto.ConditionName,
+            DiagnosedDate = dto.DiagnosedDate,
+            Notes = dto.Notes
+        };
+
+        var data = await _patientRepository.UpdateMedicalHistoryAsync(patientId, id, entity);
+        return data is null ? ApiResponse<MedicalHistoryDto>.Fail("Medical history not found") : ApiResponse<MedicalHistoryDto>.Ok(MedicalHistoryDto.FromEntity(data), "Medical history updated");
+    }
+
+    public async Task<ApiResponse<string>> DeleteMedicalHistoryAsync(int patientId, int id)
+    {
+        var deleted = await _patientRepository.DeleteMedicalHistoryAsync(patientId, id);
+        return deleted ? ApiResponse<string>.Ok("Medical history deleted") : ApiResponse<string>.Fail("Medical history not found");
     }
 }

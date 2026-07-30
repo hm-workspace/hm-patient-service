@@ -32,7 +32,7 @@ public class PatientsController : ControllerBase
     }
 
     [HttpGet("by-patient-id/{patientId}")]
-    public async Task<ActionResult<ApiResponse<PatientDto>>> GetPatientByPatientId(string patientId)
+    public async Task<ActionResult<ApiResponse<PatientDetailsDto>>> GetPatientByPatientId(string patientId)
     {
         var result = await _patientService.GetPatientByPatientIdAsync(patientId);
         return result.Success ? Ok(result) : NotFound(result);

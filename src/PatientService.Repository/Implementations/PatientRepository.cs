@@ -137,7 +137,7 @@ public class PatientRepository : BaseRepository, IPatientRepository
     {
         var id = await ExecuteScalarAsync<int>(
             StoredProcedureNames.AddAllergy,
-            allergy,
+            new { allergy.PatientId, allergy.Allergy, allergy.Severity, allergy.Notes },
             commandType: CommandType.StoredProcedure);
         allergy.Id = id;
         return allergy;
@@ -247,6 +247,64 @@ public class PatientRepository : BaseRepository, IPatientRepository
     {
         var rowsAffected = await ExecuteAsync(
             StoredProcedureNames.DeleteMedication,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+        return rowsAffected > 0;
+    }
+
+    public async Task<IReadOnlyCollection<MedicalHistoryEntity>> GetMedicalHistoryAsync(int patientId)
+    {
+        var items = await QueryAsync<MedicalHistoryEntity>(
+            StoredProcedureNames.GetMedicalHistoryByPatientId,
+            new { PatientId = patientId },
+            commandType: CommandType.StoredProcedure);
+        return items.ToList();
+    }
+
+    public Task<MedicalHistoryEntity?> GetMedicalHistoryAsync(int patientId, int id)
+    {
+        return QuerySingleOrDefaultAsync<MedicalHistoryEntity>(
+            StoredProcedureNames.GetMedicalHistoryById,
+            new { PatientId = patientId, Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<MedicalHistoryEntity> AddMedicalHistoryAsync(MedicalHistoryEntity medicalHistory)
+    {
+        var id = await ExecuteScalarAsync<int>(
+            StoredProcedureNames.AddMedicalHistory,
+            medicalHistory,
+            commandType: CommandType.StoredProcedure);
+        medicalHistory.Id = id;
+        return medicalHistory;
+    }
+
+    public async Task<MedicalHistoryEntity?> UpdateMedicalHistoryAsync(int patientId, int id, MedicalHistoryEntity medicalHistory)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.UpdateMedicalHistory,
+            new
+            {
+                PatientId = patientId,
+                Id = id,
+                medicalHistory.ConditionName,
+                medicalHistory.DiagnosedDate,
+                medicalHistory.Notes
+            },
+            commandType: CommandType.StoredProcedure);
+
+        if (rowsAffected <= 0)
+        {
+            return null;
+        }
+
+        return await GetMedicalHistoryAsync(patientId, id);
+    }
+
+    public async Task<bool> DeleteMedicalHistoryAsync(int patientId, int id)
+    {
+        var rowsAffected = await ExecuteAsync(
+            StoredProcedureNames.DeleteMedicalHistory,
             new { PatientId = patientId, Id = id },
             commandType: CommandType.StoredProcedure);
         return rowsAffected > 0;

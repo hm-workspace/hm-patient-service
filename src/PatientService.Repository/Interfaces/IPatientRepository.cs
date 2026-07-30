@@ -26,5 +26,11 @@ public interface IPatientRepository
     Task<MedicationEntity?> UpdateMedicationAsync(int patientId, int id, MedicationEntity medication);
     Task<MedicationEntity?> DiscontinueMedicationAsync(int patientId, int id, DateTime endDate);
     Task<bool> DeleteMedicationAsync(int patientId, int id);
+
+    Task<IReadOnlyCollection<MedicalHistoryEntity>> GetMedicalHistoryAsync(int patientId);
+    Task<MedicalHistoryEntity?> GetMedicalHistoryAsync(int patientId, int id);
+    Task<MedicalHistoryEntity> AddMedicalHistoryAsync(MedicalHistoryEntity medicalHistory);
+    Task<MedicalHistoryEntity?> UpdateMedicalHistoryAsync(int patientId, int id, MedicalHistoryEntity medicalHistory);
+    Task<bool> DeleteMedicalHistoryAsync(int patientId, int id);
 }
 

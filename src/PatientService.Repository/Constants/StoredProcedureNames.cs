@@ -23,4 +23,10 @@ public static class StoredProcedureNames
     public const string UpdateMedication = "dbo.UpdateMedication";
     public const string DiscontinueMedication = "dbo.DiscontinueMedication";
     public const string DeleteMedication = "dbo.DeleteMedication";
+
+    public const string GetMedicalHistoryByPatientId = "dbo.GetMedicalHistoryByPatientId";
+    public const string GetMedicalHistoryById = "dbo.GetMedicalHistoryById";
+    public const string AddMedicalHistory = "dbo.AddMedicalHistory";
+    public const string UpdateMedicalHistory = "dbo.UpdateMedicalHistory";
+    public const string DeleteMedicalHistory = "dbo.DeleteMedicalHistory";
 }

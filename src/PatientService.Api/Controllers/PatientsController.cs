@@ -57,6 +57,13 @@ public class PatientsController : ControllerBase
         return CreatedAtAction(nameof(GetPatient), new { id = result.Data?.Id ?? 0 }, result);
     }
 
+    [HttpPost("with-clinical-details")]
+    public async Task<ActionResult<ApiResponse<PatientWithClinicalDetailsDto>>> CreatePatientWithClinicalDetails([FromBody] CreatePatientWithClinicalDetailsDto createPatientDto)
+    {
+        var result = await _patientService.CreatePatientWithClinicalDetailsAsync(createPatientDto);
+        return CreatedAtAction(nameof(GetPatient), new { id = result.Data?.Patient.Id ?? 0 }, result);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<PatientDto>>> UpdatePatient(int id, [FromBody] UpdatePatientDto updatePatientDto)
     {
@@ -71,112 +78,3 @@ public class PatientsController : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 }
-
-[Authorize]
-[ApiController]
-[Route("api/patients/{patientId:int}/allergies")]
-public class PatientAllergiesController : ControllerBase
-{
-    private readonly IPatientService _patientService;
-
-    public PatientAllergiesController(IPatientService patientService)
-    {
-        _patientService = patientService;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<AllergyDto>>>> GetAllergies(int patientId)
-    {
-        return Ok(await _patientService.GetAllergiesAsync(patientId));
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<ApiResponse<AllergyDto>>> GetAllergy(int patientId, int id)
-    {
-        var result = await _patientService.GetAllergyAsync(patientId, id);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<ApiResponse<AllergyDto>>> AddAllergy(int patientId, [FromBody] AllergyDto dto)
-    {
-        var result = await _patientService.AddAllergyAsync(patientId, dto);
-        return CreatedAtAction(nameof(GetAllergy), new { patientId, id = 0 }, result);
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<ApiResponse<AllergyDto>>> UpdateAllergy(int patientId, int id, [FromBody] AllergyDto dto)
-    {
-        var result = await _patientService.UpdateAllergyAsync(patientId, id, dto);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult<ApiResponse<string>>> DeleteAllergy(int patientId, int id)
-    {
-        var result = await _patientService.DeleteAllergyAsync(patientId, id);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-}
-
-[Authorize]
-[ApiController]
-[Route("api/patients/{patientId:int}/medications")]
-public class PatientMedicationsController : ControllerBase
-{
-    private readonly IPatientService _patientService;
-
-    public PatientMedicationsController(IPatientService patientService)
-    {
-        _patientService = patientService;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<IEnumerable<MedicationDto>>>> GetMedications(int patientId)
-    {
-        return Ok(await _patientService.GetMedicationsAsync(patientId));
-    }
-
-    [HttpGet("active")]
-    public async Task<ActionResult<ApiResponse<IEnumerable<MedicationDto>>>> GetActiveMedications(int patientId)
-    {
-        return Ok(await _patientService.GetActiveMedicationsAsync(patientId));
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<ApiResponse<MedicationDto>>> GetMedication(int patientId, int id)
-    {
-        var result = await _patientService.GetMedicationAsync(patientId, id);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<ApiResponse<MedicationDto>>> AddMedication(int patientId, [FromBody] MedicationDto dto)
-    {
-        var result = await _patientService.AddMedicationAsync(patientId, dto);
-        return CreatedAtAction(nameof(GetMedication), new { patientId, id = 0 }, result);
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<ApiResponse<MedicationDto>>> UpdateMedication(int patientId, int id, [FromBody] MedicationDto dto)
-    {
-        var result = await _patientService.UpdateMedicationAsync(patientId, id, dto);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-
-    [HttpPost("{id:int}/discontinue")]
-    public async Task<ActionResult<ApiResponse<MedicationDto>>> DiscontinueMedication(int patientId, int id, [FromBody] DiscontinueMedicationRequest request)
-    {
-        var result = await _patientService.DiscontinueMedicationAsync(patientId, id, request.EndDate ?? DateTime.UtcNow);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult<ApiResponse<string>>> DeleteMedication(int patientId, int id)
-    {
-        var result = await _patientService.DeleteMedicationAsync(patientId, id);
-        return result.Success ? Ok(result) : NotFound(result);
-    }
-}
-
-

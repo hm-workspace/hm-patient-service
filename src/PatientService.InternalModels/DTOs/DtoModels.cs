@@ -57,6 +57,19 @@ public class DiscontinueMedicationRequest
     public DateTime? EndDate { get; set; }
 }
 
+public class CreatePatientWithClinicalDetailsDto : CreatePatientDto
+{
+    public List<AllergyDto> Allergies { get; set; } = new();
+    public List<MedicationDto> Medications { get; set; } = new();
+}
+
+public class PatientWithClinicalDetailsDto
+{
+    public PatientDto Patient { get; set; } = new();
+    public IReadOnlyCollection<AllergyDto> Allergies { get; set; } = Array.Empty<AllergyDto>();
+    public IReadOnlyCollection<MedicationDto> Medications { get; set; } = Array.Empty<MedicationDto>();
+}
+
 public class PatientDto
 {
     public int Id { get; set; }

@@ -11,6 +11,7 @@ public interface IPatientService
     Task<ApiResponse<PagedResult<PatientDto>>> SearchPatientsAsync(string searchTerm, int pageNumber, int pageSize);
     Task<ApiResponse<string>> GeneratePatientIdAsync();
     Task<ApiResponse<PatientDto>> CreatePatientAsync(CreatePatientDto createPatientDto);
+    Task<ApiResponse<PatientWithClinicalDetailsDto>> CreatePatientWithClinicalDetailsAsync(CreatePatientWithClinicalDetailsDto createPatientDto);
     Task<ApiResponse<PatientDto>> UpdatePatientAsync(int id, UpdatePatientDto updatePatientDto);
     Task<ApiResponse<string>> DeletePatientAsync(int id);
 

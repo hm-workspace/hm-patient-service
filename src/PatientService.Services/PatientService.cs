@@ -69,6 +69,45 @@ public class PatientService : IPatientService
         return ApiResponse<PatientDto>.Ok(PatientDto.FromEntity(created), "Patient created successfully");
     }
 
+    public async Task<ApiResponse<PatientWithClinicalDetailsDto>> CreatePatientWithClinicalDetailsAsync(CreatePatientWithClinicalDetailsDto createPatientDto)
+    {
+        var patientResult = await CreatePatientAsync(createPatientDto);
+        if (!patientResult.Success || patientResult.Data is null)
+        {
+            return ApiResponse<PatientWithClinicalDetailsDto>.Fail(patientResult.Message);
+        }
+
+        var patientId = patientResult.Data.Id;
+        var allergies = new List<AllergyDto>();
+        foreach (var allergy in createPatientDto.Allergies ?? [])
+        {
+            var result = await AddAllergyAsync(patientId, allergy);
+            if (result.Data is not null)
+            {
+                allergies.Add(result.Data);
+            }
+        }
+
+        var medications = new List<MedicationDto>();
+        foreach (var medication in createPatientDto.Medications ?? [])
+        {
+            var result = await AddMedicationAsync(patientId, medication);
+            if (result.Data is not null)
+            {
+                medications.Add(result.Data);
+            }
+        }
+
+        var data = new PatientWithClinicalDetailsDto
+        {
+            Patient = patientResult.Data,
+            Allergies = allergies,
+            Medications = medications
+        };
+
+        return ApiResponse<PatientWithClinicalDetailsDto>.Ok(data, "Patient created successfully");
+    }
+
     public async Task<ApiResponse<PatientDto>> UpdatePatientAsync(int id, UpdatePatientDto updatePatientDto)
     {
         var entity = new PatientEntity
